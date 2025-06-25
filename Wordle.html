@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Wordle but completely random!</title>
+  <style>
+    body {
+      background-color: #000;
+      color: #fff;
+      font-family: 'Arial', sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: start;
+      min-height: 100vh;
+      margin: 0;
+      padding: 20px;
+    }
+    h1 {
+      margin-bottom: 20px;
+      color: #0f0;
+      font-size: 2.5em;
+    }
+    #game {
+      display: grid;
+      grid-template-columns: repeat(5, 60px);
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .tile {
+      width: 60px;
+      height: 60px;
+      border: 2px solid #555;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2em;
+      text-transform: uppercase;
+      background-color: #111;
+    }
+    .correct {
+      background-color: #538d4e;
+    }
+    .present {
+      background-color: #b59f3b;
+    }
+    .absent {
+      background-color: #3a3a3c;
+    }
+    #message {
+      margin-top: 20px;
+      font-size: 1.2em;
+    }
+  </style>
+</head>
+<body>
+  <h1>Wordle but completely random!</h1>
+  <div id="game"></div>
+  <div id="message"></div>
+
+  <script>
+    function generateRandomWord() {
+      let word = '';
+      const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+      for (let i = 0; i < 5; i++) {
+        word += letters.charAt(Math.floor(Math.random() * letters.length));
+      }
+      return word;
+    }
+
+    const WORD = generateRandomWord();
+    const maxGuesses = 15; // Increased guesses
+    let currentGuess = 0;
+    let currentTile = 0;
+    const game = document.getElementById('game');
+    const message = document.getElementById('message');
+
+    const grid = [];
+
+    for (let row = 0; row < maxGuesses; row++) {
+      const rowTiles = [];
+      for (let col = 0; col < 5; col++) {
+        const tile = document.createElement('div');
+        tile.className = 'tile';
+        game.appendChild(tile);
+        rowTiles.push(tile);
+      }
+      grid.push(rowTiles);
+    }
+
+    let currentWord = '';
+
+    document.addEventListener('keydown', (e) => {
+      if (currentGuess >= maxGuesses) return;
+
+      const key = e.key.toUpperCase();
+
+      if (key === 'BACKSPACE') {
+        if (currentWord.length > 0) {
+          currentWord = currentWord.slice(0, -1);
+          currentTile--;
+          grid[currentGuess][currentTile].textContent = '';
+        }
+        return;
+      }
+
+      if (key === 'ENTER') {
+        if (currentWord.length !== 5) {
+          showMessage('Not enough letters');
+          return;
+        }
+        submitGuess();
+        return;
+      }
+
+      if (/^[A-Z]$/.test(key)) {
+        if (currentWord.length < 5) {
+          grid[currentGuess][currentTile].textContent = key;
+          currentWord += key;
+          currentTile++;
+        }
+      }
+    });
+
+    function submitGuess() {
+      const wordArray = WORD.split('');
+      const guessArray = currentWord.split('');
+
+      for (let i = 0; i < 5; i++) {
+        const tile = grid[currentGuess][i];
+        if (guessArray[i] === wordArray[i]) {
+          tile.classList.add('correct');
+        } else if (wordArray.includes(guessArray[i])) {
+          tile.classList.add('present');
+        } else {
+          tile.classList.add('absent');
+        }
+      }
+
+      if (currentWord === WORD) {
+        showMessage('You win!');
+        currentGuess = maxGuesses;
+        return;
+      }
+
+      currentGuess++;
+      currentTile = 0;
+      currentWord = '';
+
+      if (currentGuess >= maxGuesses) {
+        showMessage(`Game over. The word was ${WORD}.`);
+      }
+    }
+
+    function showMessage(msg) {
+      message.textContent = msg;
+    }
+  </script>
+</body>
+</html>
